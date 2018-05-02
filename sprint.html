@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>來估工時吧</title>
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+	integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+	crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+	integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp"
+	crossorigin="anonymous">
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"
+	integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+	crossorigin="anonymous"></script>
+
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+<!-- Latest compiled and minified JavaScript -->
+<script
+	src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+	integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+	crossorigin="anonymous"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+
+<!-- CDNJS :: Sortable (https://cdnjs.com/) -->
+<script
+	src="https://cdn.jsdelivr.net/npm/sortablejs@1.7.0/Sortable.min.js"></script>
+
+<!-- CDNJS :: Vue.Draggable (https://cdnjs.com/) -->
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.16.0/vuedraggable.min.js"></script>
+
+<script>
+	var vm;
+
+	$(function() {
+		vm = new Vue({
+			el : '#sprint',
+			data : {
+				message : 'Hello Vue.js!',
+				jiraIssues : [],
+				jiraText : undefined,
+				storyPoints : [1, 2, 3, 5, 8, 13, 21],
+				converted : false,
+				locked : false
+			},
+			methods : {
+				convert : function(event) {
+					var jiraIssuePattern = /\w+\-\d{3,3}.+/g;
+					var jiraPattern = /(\w+\-\d{3,3})(.+)/;
+
+					this.jiraIssues = [];
+					var jiraTexts = this.jiraText.match(jiraIssuePattern);
+					for (var i = 0; i < jiraTexts.length; i++) {
+						var jiraText = jiraTexts[i].match(jiraPattern);
+						this.jiraIssues.push({
+							'jiraKey' : jiraText[1],
+							'jiraDescription' : jiraText[2],
+							'storyPoint' : this.storyPoints[0]
+						});
+					}
+					
+					$("#jiraIssues").sortable();
+					this.converted = true;
+				},
+				backToConvert: function() {
+					var r = confirm("確定要回到上個步驟嗎？ 剛剛排的單子會全部不見歐...");
+					if(r) {
+					this.converted = false;
+					}
+				},
+				lock : function(event) {
+					console.log(this.jiraIssues);
+					this.locked = true;
+				},
+				backToLock : function() {
+					this.locked = false;
+				},
+				moveDown : function(index) {
+					if(index == this.jiraIssues.length -1) {
+						return;
+					}
+					
+					var temp = $.extend({}, this.jiraIssues[index]);
+					this.jiraIssues.splice(index, 1, $.extend({}, this.jiraIssues[index + 1]))
+					this.jiraIssues.splice(index + 1, 1, temp);
+				},
+				moveUp : function(index) {
+					if(index == 0) {
+						return;
+					}
+					
+					var temp = $.extend({}, this.jiraIssues[index]);
+					this.jiraIssues.splice(index, 1, $.extend({}, this.jiraIssues[index - 1]))
+					this.jiraIssues.splice(index - 1, 1, temp);
+				},
+				changeStoryPoint : function(index, storyPoint) {
+					for(var i = index; i < this.jiraIssues.length; i++) {
+						this.jiraIssues[i].storyPoint = storyPoint;
+					}
+				}
+			}
+		})
+	});
+</script>
+<style type="text/css">
+body {
+	background-color: #e9ebee
+}
+
+.container-fluid {
+	height: 100vh;
+	padding: 0px !important;
+}
+
+.panel {
+	margin: 15px;
+	height: calc(100vh - 30px) !important;
+	border: 1px solid #dddfe2;
+}
+
+.panel-body {
+	height: calc(100% - 96px) !important;
+	overflow: auto;
+}
+
+.panel>.panel-heading {
+	background-color: #4267b2;
+	background-image: none;
+	color: #FFFFFF;
+}
+
+.container {
+	padding: 15px;
+	margin: auto;
+}
+
+.jira-issue-text {
+	width: 100%;
+}
+
+.jira-issue {
+	background-color: #d8deea;
+	padding-left: 5px;
+	margin: 4px;
+	border: 1px solid grey;
+	border-radius: 4px;
+	line-height: 34px;
+}
+
+.jira-issue-key {
+	color: #365899;
+	font-weight: 900;
+}
+
+.jira-issue .dropdown-menu {
+    max-height: 30vh;
+    overflow: auto;
+    min-width: 50px;
+    left: 103px;
+}
+</style>
+</head>
+
+<body>
+	<div id="sprint" class="container-fluid">
+		<div class="panel panel-info" v-show="!converted && !locked">
+			<div class="panel-heading">Sprint Jira</div>
+			<div class="panel-body text-right">
+				<textarea class="jira-issue-text" rows="20"
+					placeholder="請貼上這個 Sprint 的 Jira 單們" v-model="jiraText"></textarea>
+			</div>
+			<div class="panel-footer">
+				<div class="row">
+					<div class="col-md-12 text-right">
+						<button type="button" class="btn btn-default"
+							:disabled="!jiraText || jiraText == ''" @click="convert()">
+							<span class="glyphicon glyphicon-cutlery"></span>
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="panel panel-info" v-show="converted && !locked">
+			<div class="panel-heading">Sprint Jira - 總共有
+				{{jiraIssues.length}} 張單子</div>
+			<div class="panel-body">
+				<draggable v-model="jiraIssues" :options="{draggable:'.jira-issue'}">
+					<div v-for="(jiraIssue, index) in jiraIssues" :key="jiraIssue.jiraKey" class="jira-issue">
+						<div class="row">
+							<div class="col-md-11 dropdown">
+								<button type="button" class="btn btn-default" :disabled="index == 0" @click="moveUp(index)">
+									<span class="glyphicon glyphicon-arrow-up"></span>
+	 							</button>
+								<button type="button" class="btn btn-default" :disabled="index == jiraIssues.length - 1" @click="moveDown(index)">
+									<span class="glyphicon glyphicon-arrow-down"></span>
+								</button>
+								<button class="btn btn-default dropdown-toggle" type="button" :id="'dropdownMenu' + index" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+									<span>{{jiraIssue.storyPoint}}</span>
+								</button>
+								<ul class="dropdown-menu" :aria-labelledby="'dropdownMenu' + index">
+									<li v-for="storyPoint in storyPoints" @click="changeStoryPoint(index, storyPoint)">
+										<span>{{storyPoint}}</span>
+									</li>
+								</ul>
+								<span class="jira-issue-key">
+									<a :href="'https://gssjira.gss.com.tw/browse/' + jiraIssue.jiraKey" target="_blank">{{jiraIssue.jiraKey}}</a>
+								</span>
+								<span class="jira-issue-description">{{jiraIssue.jiraDescription}}</span>
+							</div>
+							<div class="col-md-1">
+								<input type="number" class="form-control" v-model="jiraIssue.jiraHour">
+							</div>
+						</div>
+					</div>
+				</draggable>
+			</div>
+			<div class="panel-footer">
+				<div class="row">
+					<div class="col-md-12 text-right">
+						<button type="button" class="btn btn-default" @click="backToConvert()">
+							<span class="glyphicon glyphicon-arrow-left"></span>
+						</button>
+						<button type="button" class="btn btn-default" @click="lock()">
+							<span class="glyphicon glyphicon-share"></span>
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="panel panel-info" v-show="converted && locked">
+			<div class="panel-heading">Sprint Jira - 總共有
+				{{jiraIssues.length}} 張單子</div>
+			<div class="panel-body">
+			<table class="table table-condensed table-bordered">
+				<thead>
+					<tr>
+						<th>Jira Key</th>
+						<th>Description</th>
+						<th>Story Point</th>
+						<th>工時</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="jiraIssue in jiraIssues" :key="jiraIssue.jiraKey">
+						<td>{{jiraIssue.jiraKey}}</td>
+						<td>{{jiraIssue.jiraDescription}}</td>
+						<td>{{jiraIssue.storyPoint}}</td>
+						<td>{{jiraIssue.jiraHour}}</td>
+					</tr>
+				</tbody>
+			</table>
+			</div>
+			<div class="panel-footer">
+				<div class="row">
+					<div class="col-md-12 text-right">
+						<button type="button" class="btn btn-default" @click="backToLock()">
+							<span class="glyphicon glyphicon-arrow-left"></span>
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+
+</html>
