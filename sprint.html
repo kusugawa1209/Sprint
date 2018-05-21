@@ -198,10 +198,10 @@ body {
 						<div class="row">
 							<div class="col-md-11 dropdown">
 								<button type="button" class="btn btn-default" :disabled="index == 0" @click="moveUp(index)">
-									<span class="glyphicon glyphicon-arrow-up"></span>
+									<span class="glyphicon glyphicon-menu-up"></span>
 	 							</button>
 								<button type="button" class="btn btn-default" :disabled="index == jiraIssues.length - 1" @click="moveDown(index)">
-									<span class="glyphicon glyphicon-arrow-down"></span>
+									<span class="glyphicon glyphicon-menu-down"></span>
 								</button>
 								<button class="btn btn-default dropdown-toggle" type="button" :id="'dropdownMenu' + index" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
 									<span>{{jiraIssue.storyPoint}}</span>
